@@ -1,0 +1,189 @@
+doctype html
+html
+  head
+    title SwiftSOS
+    link(rel="stylesheet", type="text/css", href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css")
+    link(rel="stylesheet", type="text/css", href="/static/styles.css")
+    link(rel="stylesheet", href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css")
+    script(src="https://code.jquery.com/jquery-3.6.0.min.js")
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/geolib/3.3.1/geolib.min.js")
+    script(src="https://cdn.jsdelivr.net/npm/geolib/dist/geolib.min.js")
+    script(src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js")
+    script.
+      function getLocation() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(showPosition, showError);
+        } else {
+          alert("Geolocation is not supported by this browser.");
+        }
+      }
+
+      function showPosition(position) {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        // Initialize the map
+        const map = L.map('map').setView([lat, lon], 13);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+        }).addTo(map);
+
+        // Add user location marker
+        L.marker([lat, lon]).addTo(map).bindPopup('You are here').openPopup();
+
+        $.ajax({
+          url: '/garages',
+          method: 'GET',
+          success: function(data) {
+            const nearestGarage = findNearestGarage(data, lat, lon);
+            if (nearestGarage) {
+              $('#garageDetails').html(
+                `<h3>Nearest Garage</h3>
+                <p><strong>Name:</strong> ${nearestGarage.name}</p>
+                <p><strong>Address:</strong> ${nearestGarage.address}</p>
+                <p><strong>Distance:</strong> ${nearestGarage.distance} meters</p>`
+              );
+              // Add garage location marker
+              L.marker([nearestGarage.latitude, nearestGarage.longitude]).addTo(map).bindPopup(nearestGarage.name).openPopup();
+            } else {
+              $('#garageDetails').html('<p>No garages found</p>');
+            }
+          },
+          error: function(error) {
+            console.error(error);
+            alert('Error fetching garages');
+          }
+        });
+      }
+
+      function showError(error) {
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            alert("User denied the request for Geolocation.");
+            break;
+          case error.POSITION_UNAVAILABLE:
+            alert("Location information is unavailable.");
+            break;
+          case error.TIMEOUT:
+            alert("The request to get user location timed out.");
+            break;
+          case error.UNKNOWN_ERROR:
+            alert("An unknown error occurred.");
+            break;
+        }
+      }
+
+      function findNearestGarage(garages, userLat, userLon) {
+        let nearestGarage = null;
+        let minDistance = Infinity;
+        garages.forEach(garage => {
+          const distance = geolib.getDistance(
+            { latitude: userLat, longitude: userLon },
+            { latitude: garage.latitude, longitude: garage.longitude }
+          );
+          if (distance < minDistance) {
+            minDistance = distance;
+            nearestGarage = { ...garage, distance };
+          }
+        });
+        return nearestGarage;
+      }
+  body
+    header
+      nav.navbar
+        .logo
+          h1 SwiftSOS
+          
+        input#menu-toggle(type="checkbox")
+        label.menu-icon(for="menu-toggle") ☰
+        ul.menu-items
+          li: a(href="#content") Home
+          li: a(href="#about") About
+          li: a(href="#service") Service
+          li: a(href="#footer-links") Contact
+          li
+            ul
+              if username
+                span.w1: img(src="/static/profile-removebg-preview.png" width="50px" height="50px" alt="Profile Image")
+                li.s1: a(href="") #{username}
+              
+    .content#content
+      .map#map(style="height: 500px; width: 100%;")
+      .details
+        h2 Instant Emergency Garage Services
+        ul
+          li: img(src="/static/carIcon.png", alt="Car", height="50", width="50")
+          li: img(src="/static/bikeIcon.png", alt="Bike", height="50", width="50")
+          li: img(src="/static/scooterIcon.png", alt="Scooter", height="50", width="50")
+        button(onclick="getLocation()") Find Nearest Garage
+        #garageDetails
+    .about#about
+      .paragraph
+        h2 About Us
+        p At SwiftSOS, we're more than just a garage service. We're your reliable partner in times of vehicle emergencies, offering swift and professional assistance when you need it most. Our team of highly trained technicians is dedicated to providing you with the best service possible, ensuring that your vehicle is back on the road in no time. With our 24/7 emergency garage services, you can rest assured that help is always just a phone call away. Whether you're dealing with a flat tire, a dead battery, or any other vehicle-related issue, our team is here to help. We pride ourselves on our quick response times and our ability to handle any situation with ease and efficiency.
+        p But we're not just about fixing cars. We're also committed to providing you with the best customer experience possible. From our friendly customer service team to our transparent pricing policy, we strive to make your experience with us as smooth and hassle-free as possible. At SwiftSOS, we understand that your vehicle is more than just a mode of transportation. It's a part of your life, and we're here to help you keep it running smoothly. So the next time you find yourself in need of emergency garage services, don't hesitate to give us a call. We'll be there for you, every step of the way.
+      .img1
+        img(src="/static/pic1.png", alt="about img", height="500", width="400")
+    .service#service
+      .img2
+        img(src="/static/pic2.png", alt="service img")
+      .options
+        h2 Our Services
+        ul
+          li
+            b Emergency Roadside Assistance:
+            | Immediate help for flat tires, dead batteries, and lockouts.
+          li
+            b Vehicle Diagnostics:
+            | Professional diagnostics to identify and fix mechanical issues.
+          li
+            b Towing Services:
+            | Safe and reliable towing for vehicles in need of repair.
+          li
+            b Emergency Fuel Delivery:
+            | Delivery of fuel if you run out unexpectedly.
+          li
+            b Jump Starts:
+            | Quick jump-start services for vehicles with dead batteries.
+          li
+            b Tire Changes:
+            | Assistance with changing flat tires and getting you back on the road.
+          li
+            b Locksmith Services:
+            | Help with lockouts and lost keys.
+          li
+            b Fluid Delivery:
+            | Delivery of essential fluids such as coolant or oil.
+          li
+            b Minor Repairs:
+            | On-the-spot repairs for minor mechanical issues.
+          li
+            b Battery Replacement:
+            | Replacement of dead or faulty batteries.
+
+    footer
+      .footer-links#footer-links
+        ul
+          li: a(href="#about") About
+          li: a(href="") Newsroom
+          li: a(href="") Blog
+          li: a(href="") Careers
+          li: a(href="") Privacy
+          li: a(href="") Terms
+      .social-icons
+        a(href="https://www.facebook.com/suraj.kusahoo.56")
+          i.fab.fa-facebook-f
+        a(href="https://twitter.com/SurajKrSahoo")
+          i.fab.fa-twitter
+        a(href="https://www.instagram.com/suraj_kr.000/")
+          i.fab.fa-instagram
+      br
+      .store-links
+        a(href="#")
+          img(src="/static/appstore.png", alt="App Store")
+        a(href="#")
+          img(src="/static/playstore.png", alt="Google Play")
+      .copyright
+        p &copy; 2024 SwiftSOS Inc.

@@ -1,0 +1,24 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title Login Page
+    link(rel="stylesheet", href="style.css")
+    style 
+       include ../static/style.css
+  body
+    center: h1  Welcom to SWIFTSOS
+    .login-container
+      h2 Login
+      form(action="/login ", method="POST")
+        .input-group
+          label(for="username") Username:
+          input(type="text", id="username", name="username", required)
+        .input-group
+          label(for="password") Password:
+          input(type="password", id="password", name="password", required)
+        button(type="submit") Login
+      a(href="/signup") Sign up
+      
+        
